@@ -16,7 +16,7 @@ const menuItems = ref<MenuItem[]>([
   { id: 3, title: "Проекты", icon: "i-carbon-folder", path: "/projects" },
   { id: 5, title: "Задачи", icon: "i-carbon-task", path: "/tasks" },
   { id: 6, title: "Профиль", icon: "i-carbon-user-profile", path: "/profile" },
-  { id: 7, title: "Анимации", icon: "i-carbon-animation", path: "/animations" },
+  { id: 7, title: "Анимации", icon: "i-carbon-ibm-cloud", path: "/animations" },
 ]);
 
 const toggleSidebar = () => {
@@ -128,8 +128,8 @@ onMounted(() => {
             class="menu-text ml-3 whitespace-nowrap transition-all duration-300"
             :class="{ 'opacity-0 w-0 ml-0': isCollapsed }"
           >
-            <div class="font-medium">Иван Иванов</div>
-            <div class="text-sm text-gray-500">Администратор</div>
+            <div class="font-medium">Владислав Солянкин</div>
+            <div class="text-sm text-gray-500">Frontend Developer</div>
           </div>
         </div>
       </router-link>

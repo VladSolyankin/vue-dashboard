@@ -90,11 +90,12 @@ onMounted(() => {
 
 <style scoped>
 .stat-card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+  transition: box-shadow 0.3s ease;
   will-change: transform;
 }
 
 .stat-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 </style>

@@ -1,234 +1,98 @@
+<template>
+  <div class="dashboard-projects p-4">
+    <h2 class="text-xl font-semibold mb-4">Последние проекты</h2>
+
+    <!-- Краткая статистика -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <h3 class="text-sm text-gray-500">Всего проектов</h3>
+        <p class="text-2xl font-bold">{{ projects.length }}</p>
+      </div>
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <h3 class="text-sm text-gray-500">Всего коммитов</h3>
+        <p class="text-2xl font-bold">{{ totalCommits }}</p>
+      </div>
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <h3 class="text-sm text-gray-500">Активных проектов</h3>
+        <p class="text-2xl font-bold">{{ activeProjects }}</p>
+      </div>
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <h3 class="text-sm text-gray-500">Звёзд на GitHub</h3>
+        <p class="text-2xl font-bold">{{ totalStars }}</p>
+      </div>
+    </div>
+
+    <!-- Графики -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <h3 class="text-sm font-semibold mb-2">Технологии</h3>
+        <canvas id="techChart"></canvas>
+      </div>
+      <div class="bg-white rounded-lg shadow-sm p-4">
+        <h3 class="text-sm font-semibold mb-2">Активность</h3>
+        <canvas id="activityChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Список последних проектов -->
+    <div class="bg-white rounded-lg shadow-sm p-4">
+      <h3 class="text-sm font-semibold mb-4">Последние обновления</h3>
+      <div class="space-y-4">
+        <div
+          v-for="project in sortedProjects"
+          :key="project.id"
+          class="project-card flex items-center justify-between p-2 hover:bg-gray-50 rounded"
+        >
+          <div>
+            <h4 class="font-medium">{{ project.name }}</h4>
+            <p class="text-sm text-gray-500">{{ project.description }}</p>
+          </div>
+          <div class="text-sm text-gray-500">
+            {{ new Date(project.lastUpdate).toLocaleDateString() }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
-import { Chart, registerables } from "chart.js";
-import { gsap } from "gsap";
-import annotationPlugin from "chartjs-plugin-annotation";
+import { ref, computed, onMounted } from "vue";
+import { useCharts } from "../../composables/useCharts";
+import { useAnimations } from "../../composables/useAnimations";
+import { mockProjects, mockCommitActivity } from "../../data/mockData";
 
-// Регистрируем необходимые компоненты
-Chart.register(...registerables, annotationPlugin);
+const projects = ref(mockProjects);
+const commitActivity = ref(mockCommitActivity);
 
-interface Project {
-  id: number;
-  name: string;
-  description: string;
-  technologies: string[];
-  stars: number;
-  commits: number;
-  url: string;
-  contributors: number;
-  lastUpdate: string;
-}
+// Вычисляемые свойства для статистики
+const totalCommits = computed(() =>
+  projects.value.reduce((sum, project) => sum + project.commits, 0)
+);
 
-interface CommitActivity {
-  date: string;
-  commits: number;
-}
+const totalStars = computed(() =>
+  projects.value.reduce((sum, project) => sum + project.stars, 0)
+);
 
-// Моковые данные для проектов (краткая версия)
-const projects = ref<Project[]>([
-  {
-    id: 1,
-    name: "Vue Dashboard",
-    description:
-      "Современный адаптивный дашборд с богатой визуализацией данных",
-    technologies: ["Vue 3", "TypeScript", "Chart.js"],
-    stars: 45,
-    commits: 128,
-    url: "https://github.com/username/vue-dashboard",
-    contributors: 3,
-    lastUpdate: "2024-03-15",
-  },
-  {
-    id: 2,
-    name: "React Game Engine",
-    description: "Игровой движок на React с поддержкой WebGL",
-    technologies: ["React", "WebGL", "TypeScript"],
-    stars: 89,
-    commits: 256,
-    url: "https://github.com/username/react-game-engine",
-    contributors: 5,
-    lastUpdate: "2024-03-20",
-  },
-  {
-    id: 3,
-    name: "Node.js API Framework",
-    description: "Легковесный фреймворк для создания REST API",
-    technologies: ["Node.js", "Express", "TypeScript"],
-    stars: 67,
-    commits: 184,
-    url: "https://github.com/username/node-api-framework",
-    contributors: 4,
-    lastUpdate: "2024-03-18",
-  },
-]);
+const activeProjects = computed(
+  () =>
+    projects.value.filter((project) => {
+      const lastUpdate = new Date(project.lastUpdate);
+      const monthAgo = new Date();
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
+      return lastUpdate >= monthAgo;
+    }).length
+);
 
-// Данные для графика активности
-const commitActivity = ref<CommitActivity[]>([
-  { date: "2024-01", commits: 45 },
-  { date: "2024-02", commits: 62 },
-  { date: "2024-03", commits: 78 },
-  { date: "2024-04", commits: 56 },
-  { date: "2024-05", commits: 89 },
-  { date: "2024-06", commits: 95 },
-]);
+const sortedProjects = computed(() =>
+  [...projects.value].sort(
+    (a, b) =>
+      new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime()
+  )
+);
 
-// График распределения технологий (Doughnut с градиентами)
-const techChart = ref<Chart | null>(null);
-const techData = computed(() => {
-  const techs = new Map<string, number>();
-  projects.value.forEach((project) => {
-    project.technologies.forEach((tech) => {
-      techs.set(tech, (techs.get(tech) || 0) + 1);
-    });
-  });
-  return {
-    labels: Array.from(techs.keys()),
-    datasets: [
-      {
-        data: Array.from(techs.values()),
-        backgroundColor: [
-          "rgba(79, 70, 229, 0.8)",
-          "rgba(168, 85, 247, 0.8)",
-          "rgba(236, 72, 153, 0.8)",
-          "rgba(52, 211, 153, 0.8)",
-          "rgba(251, 146, 60, 0.8)",
-          "rgba(99, 102, 241, 0.8)",
-        ],
-      },
-    ],
-  };
-});
-
-// График активности коммитов (Line с аннотациями)
-const activityChart = ref<Chart | null>(null);
-const activityData = computed(() => ({
-  labels: commitActivity.value.map((item) => item.date),
-  datasets: [
-    {
-      label: "Коммиты",
-      data: commitActivity.value.map((item) => item.commits),
-      borderColor: "rgba(79, 70, 229, 1)",
-      backgroundColor: "rgba(79, 70, 229, 0.1)",
-      fill: true,
-      tension: 0.4,
-    },
-  ],
-}));
-
-// Анимация появления проектов
-const animateProjects = () => {
-  gsap.from(".project-card", {
-    y: 30,
-    opacity: 0,
-    duration: 0.6,
-    stagger: 0.2,
-    ease: "power2.out",
-  });
-};
-
-// Инициализация графиков
-const initCharts = () => {
-  // График технологий
-  const techCtx = document.getElementById("techChart") as HTMLCanvasElement;
-  if (techCtx) {
-    const ctx = techCtx.getContext("2d");
-    if (ctx) {
-      // Создаем градиенты
-      const gradients = [
-        ctx.createLinearGradient(0, 0, 0, 200),
-        ctx.createLinearGradient(0, 0, 0, 200),
-      ];
-
-      gradients[0].addColorStop(0, "rgba(79, 70, 229, 0.8)");
-      gradients[0].addColorStop(1, "rgba(168, 85, 247, 0.8)");
-
-      gradients[1].addColorStop(0, "rgba(236, 72, 153, 0.8)");
-      gradients[1].addColorStop(1, "rgba(52, 211, 153, 0.8)");
-
-      techChart.value = new Chart(techCtx, {
-        type: "doughnut",
-        data: {
-          ...techData.value,
-          datasets: [
-            {
-              ...techData.value.datasets[0],
-              backgroundColor: gradients,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: "bottom",
-              labels: {
-                font: {
-                  size: 12,
-                  family: "'Inter', sans-serif",
-                },
-                padding: 20,
-              },
-            },
-          },
-          cutout: "70%",
-        },
-      });
-    }
-  }
-
-  // График активности
-  const activityCtx = document.getElementById(
-    "activityChart"
-  ) as HTMLCanvasElement;
-  if (activityCtx) {
-    activityChart.value = new Chart(activityCtx, {
-      type: "line",
-      data: activityData.value,
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            display: false,
-          },
-          annotation: {
-            annotations: {
-              maxLine: {
-                type: "line",
-                yMin: Math.max(
-                  ...commitActivity.value.map((item) => item.commits)
-                ),
-                yMax: Math.max(
-                  ...commitActivity.value.map((item) => item.commits)
-                ),
-                borderColor: "rgba(236, 72, 153, 0.5)",
-                borderWidth: 2,
-                borderDash: [5, 5],
-                label: {
-                  content: "Максимум активности",
-                  display: true,
-                  position: "end",
-                },
-              },
-            },
-          },
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: {
-              color: "rgba(0, 0, 0, 0.05)",
-            },
-          },
-          x: {
-            grid: {
-              display: false,
-            },
-          },
-        },
-      },
-    });
-  }
-};
+const { initCharts } = useCharts(projects, commitActivity);
+const { animateProjects } = useAnimations();
 
 onMounted(() => {
   initCharts();
@@ -236,93 +100,17 @@ onMounted(() => {
 });
 </script>
 
-<template>
-  <div class="space-y-6">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="text-lg font-semibold text-gray-800">Последние проекты</h3>
-      <router-link
-        to="/projects"
-        class="text-sm text-indigo-600 hover:text-indigo-700"
-      >
-        Все проекты →
-      </router-link>
-    </div>
-
-    <div class="grid grid-cols-1 gap-4">
-      <div
-        v-for="project in projects"
-        :key="project.id"
-        class="project-card bg-white rounded-lg shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow duration-300"
-      >
-        <div class="flex items-start justify-between">
-          <div>
-            <h4 class="font-medium text-gray-800">{{ project.name }}</h4>
-            <p class="text-sm text-gray-500 mt-1 line-clamp-1">
-              {{ project.description }}
-            </p>
-          </div>
-          <div class="flex items-center space-x-2">
-            <span class="text-yellow-500">★</span>
-            <span class="text-sm text-gray-600">{{ project.stars }}</span>
-          </div>
-        </div>
-
-        <div class="mt-3 flex items-center justify-between">
-          <div class="flex gap-2">
-            <span
-              v-for="tech in project.technologies.slice(0, 2)"
-              :key="tech"
-              class="px-2 py-1 text-xs font-medium rounded-full"
-              :class="{
-                'bg-indigo-100 text-indigo-700': tech.includes('Vue'),
-                'bg-blue-100 text-blue-700': tech.includes('React'),
-                'bg-green-100 text-green-700': tech.includes('Node'),
-                'bg-purple-100 text-purple-700': tech.includes('Type'),
-              }"
-            >
-              {{ tech }}
-            </span>
-            <span
-              v-if="project.technologies.length > 2"
-              class="px-2 py-1 text-xs font-medium text-gray-500"
-            >
-              +{{ project.technologies.length - 2 }}
-            </span>
-          </div>
-          <span class="text-sm text-gray-500">
-            {{ project.commits }} коммитов
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <style scoped>
+.dashboard-projects {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
 .project-card {
-  position: relative;
+  transition: all 0.2s ease-in-out;
 }
 
-.project-card::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(to right, #4f46e5, #a855f7);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.project-card:hover::before {
-  opacity: 1;
-}
-
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.project-card:hover {
+  transform: translateX(5px);
 }
 </style>

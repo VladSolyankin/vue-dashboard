@@ -17,9 +17,9 @@ interface UserProfile {
 }
 
 const profile = ref<UserProfile>({
-  fullName: "Иван Иванов",
-  email: "ivan@example.com",
-  role: "Администратор",
+  fullName: "Солянкин Владислав",
+  email: "vlad.solyankin-mail@yandex.ru",
+  role: "Frontend Developer",
   avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=19",
   joinDate: "01.01.2024",
   stats: {

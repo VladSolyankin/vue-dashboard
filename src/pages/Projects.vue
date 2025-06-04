@@ -3,6 +3,9 @@ import { ref, onMounted, computed } from "vue";
 import { Chart, registerables } from "chart.js";
 import { gsap } from "gsap";
 import annotationPlugin from "chartjs-plugin-annotation";
+import { useCharts } from "../composables/useCharts";
+import { useAnimations } from "../composables/useAnimations";
+import { mockProjects, mockCommitActivity } from "../data/mockData";
 
 // Регистрируем необходимые компоненты
 Chart.register(...registerables, annotationPlugin);
@@ -25,52 +28,8 @@ interface CommitActivity {
 }
 
 // Моковые данные для проектов
-const projects = ref<Project[]>([
-  {
-    id: 1,
-    name: "Vue Dashboard",
-    description:
-      "Современный адаптивный дашборд с богатой визуализацией данных",
-    technologies: ["Vue 3", "TypeScript", "Chart.js", "GSAP"],
-    stars: 45,
-    commits: 128,
-    url: "https://github.com/username/vue-dashboard",
-    contributors: 3,
-    lastUpdate: "2024-03-15",
-  },
-  {
-    id: 2,
-    name: "React Game Engine",
-    description: "Игровой движок на React с поддержкой WebGL",
-    technologies: ["React", "WebGL", "TypeScript", "Three.js"],
-    stars: 89,
-    commits: 256,
-    url: "https://github.com/username/react-game-engine",
-    contributors: 5,
-    lastUpdate: "2024-03-20",
-  },
-  {
-    id: 3,
-    name: "Node.js API Framework",
-    description: "Легковесный фреймворк для создания REST API",
-    technologies: ["Node.js", "Express", "MongoDB", "TypeScript"],
-    stars: 67,
-    commits: 184,
-    url: "https://github.com/username/node-api-framework",
-    contributors: 4,
-    lastUpdate: "2024-03-18",
-  },
-]);
-
-// Данные для графика активности
-const commitActivity = ref<CommitActivity[]>([
-  { date: "2024-01", commits: 45 },
-  { date: "2024-02", commits: 62 },
-  { date: "2024-03", commits: 78 },
-  { date: "2024-04", commits: 56 },
-  { date: "2024-05", commits: 89 },
-  { date: "2024-06", commits: 95 },
-]);
+const projects = ref<Project[]>(mockProjects);
+const commitActivity = ref<CommitActivity[]>(mockCommitActivity);
 
 // График распределения технологий (Doughnut с градиентами)
 const techChart = ref<Chart | null>(null);

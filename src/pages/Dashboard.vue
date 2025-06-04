@@ -91,6 +91,9 @@ const onDragEnd = () => {
 
     <!-- Статистика -->
     <div class="stats-container mb-12">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">
+        Статистика (drag and drop)
+      </h2>
       <draggable
         v-model="stats"
         :animation="200"
@@ -146,20 +149,17 @@ const onDragEnd = () => {
 
 .stat-card-wrapper {
   height: 100%;
-  display: flex;
 }
 
 .stat-card {
   position: relative;
   z-index: 1;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
   width: 100%;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-4px);
 }
 
 .stat-card-ghost {
