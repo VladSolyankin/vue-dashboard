@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import Sidebar from "./Sidebar.vue";
+import Sidebar from "../layout/Sidebar.vue";
 import StatCard from "./StatCard.vue";
 import Chart from "./Chart.vue";
 import DataTable from "./DataTable.vue";

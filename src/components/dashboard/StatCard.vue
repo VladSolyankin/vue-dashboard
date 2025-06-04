@@ -5,7 +5,7 @@ import { gsap } from "gsap";
 interface Props {
   title: string;
   value: string;
-  change: number;
+  change: string;
   icon: string;
   color: string;
 }

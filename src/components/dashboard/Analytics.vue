@@ -350,7 +350,7 @@ onBeforeUnmount(() => {
         <button
           v-for="type in ['radar', 'polar', 'bubble']"
           :key="type"
-          @click="switchView(type)"
+          @click="switchView(type as 'radar' | 'polar' | 'bubble')"
           class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           :class="[
             currentView === type
